@@ -3,30 +3,38 @@
 
 <h1>JS Interop</h1>
 
-<button class="btn btn-outline-secondary" @onclick="add">Render</button>
-<button class="btn btn-outline-secondary" @onclick="remove">Clear</button>
-<button class="btn btn-outline-secondary" @onclick="addCube">Init</button>
+<button class="btn btn-outline-secondary" @onclick="init">Init</button>
+<button class="btn btn-outline-secondary" @onclick="addCube">Add Cube</button>
+<button class="btn btn-outline-secondary" @onclick="start">Start</button>
+<button class="btn btn-outline-secondary" @onclick="stop">Stop</button>
+<button class="btn btn-outline-secondary" @onclick="removeCube">Remove Cube</button>
 <div id="myCanvas"></div>
 
 @code {
 
-   protected override async Task OnInitializedAsync()
-   {
-       await JsRuntime.InvokeVoidAsync("init");
-   }
-
-   async Task add()
-   {
-       await JsRuntime.InvokeVoidAsync("add");
-   }
-
-   async Task remove()
-   {
-       await JsRuntime.InvokeVoidAsync("remove");
-   }
-
    async Task init()
    {
+       await JsRuntime.InvokeVoidAsync("init");
+       await JsRuntime.InvokeVoidAsync("gameloop");
+   }
+
+   async Task addCube()
+   {
        await JsRuntime.InvokeVoidAsync("addCube");
+   }
+
+   async Task start()
+   {
+       await JsRuntime.InvokeVoidAsync("start");
+   }
+
+   async Task stop()
+   {
+       await JsRuntime.InvokeVoidAsync("stop");
+   }
+
+   async Task removeCube()
+   {
+       await JsRuntime.InvokeVoidAsync("removeCube");
    }
 }
