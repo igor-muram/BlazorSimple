@@ -21,7 +21,7 @@ function addCube() {
 
     if (cube === undefined) {
         var geometry = new THREE.BoxGeometry(1, 1, 1);
-        var material = new THREE.MeshBasicMaterial({ color: 0xff0051 });
+        var material = new THREE.MeshBasicMaterial({ color: 0xff0051, side: THREE.DoubleSide, wireframe: true});
         cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
     }
@@ -51,4 +51,5 @@ function stop() {
 
 function removeCube() {
     scene.remove(cube);
+    isCubeActive = false;
 }
