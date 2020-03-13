@@ -1,56 +1,44 @@
 ﻿@page "/canvas"
 
-@inherits CanvasBase
-
 @inject IJSRuntime js
 
-<h1>Canvas</h1>
-<canvas id="canvas" width="1000" height="1000" @onmousedown="OnMouseDownCanvas" @onmouseup="OnMouseUpCanvas" @onmousemove="OnMouseMoveCanvas"></canvas>
+@inherits ComponentBase
 
+@inject ViewModel ViewModel
+
+
+<h1>Canvas</h1>
+<canvas id="canvas" width="1000" height="1000" @onclick="OnClickCanvas"></canvas>
 
 @code {
 
-    double lastX, lastY;
     bool isDown = false;
-
+    MyGraphic graphic;
+    bool shouldrender = false;
+    protected override Task OnInitializedAsync()
+    {
+        graphic = new MyGraphic(js);
+        ViewModel.NeedRender.Subscribe(_ => shouldrender = true);
+        return base.OnInitializedAsync();
+    }
+    protected override bool ShouldRender()
+    {
+        return shouldrender || base.ShouldRender();
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             await js.InvokeVoidAsync("init");
-            await js.InvokeVoidAsync("clear");
         }
+        await js.InvokeVoidAsync("clear");
+        await ViewModel.Render(graphic);
+        shouldrender = false;
     }
 
     private async Task OnClickCanvas(MouseEventArgs e)
     {
-        if (e.Button == 1)
-            await DrawPoint(js, e.ClientX, e.ClientY);
+        if (e.Button == 0) await ViewModel.AddPoint.Execute((e.ClientX, e.ClientY));
     }
 
-    async Task OnMouseDownCanvas(MouseEventArgs e)
-    {
-        if (e.Button == 0)
-        {
-            isDown = true;
-            lastX = e.ClientX;
-            lastY = e.ClientY;
-        }
-    }
-
-    async Task OnMouseUpCanvas(MouseEventArgs e)
-    {
-        if (e.Button == 0)
-        {
-            isDown = false;
-        }
-    }
-
-    async Task OnMouseMoveCanvas(MouseEventArgs e)
-    {
-        if (isDown)
-        {
-            await DrawLine(js, lastX, lastY, e.ClientX, e.ClientY);
-        }
-    }
 }
