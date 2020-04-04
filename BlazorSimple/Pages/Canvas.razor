@@ -8,37 +8,44 @@
 
 
 <h1>Canvas</h1>
-<canvas id="canvas" width="1000" height="1000" @onclick="OnClickCanvas"></canvas>
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
 
 @code {
 
-    bool isDown = false;
-    MyGraphic graphic;
-    bool shouldrender = false;
-    protected override Task OnInitializedAsync()
-    {
-        graphic = new MyGraphic(js);
-        ViewModel.NeedRender.Subscribe(_ => shouldrender = true);
-        return base.OnInitializedAsync();
-    }
-    protected override bool ShouldRender()
-    {
-        return shouldrender || base.ShouldRender();
-    }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await js.InvokeVoidAsync("init");
-        }
-        await js.InvokeVoidAsync("clear");
-        await ViewModel.Render(graphic);
-        shouldrender = false;
-    }
+   bool isDown = false;
+   MyGraphic graphic;
+   bool shouldrender = true;
+   int angle = 0;
 
-    private async Task OnClickCanvas(MouseEventArgs e)
-    {
-        if (e.Button == 0) await ViewModel.AddPoint.Execute((e.ClientX, e.ClientY));
-    }
+   protected override Task OnInitializedAsync()
+   {
+       graphic = new MyGraphic(js);
+       ViewModel.NeedRender.Subscribe(_ => shouldrender = true);
+       return base.OnInitializedAsync();
+   }
+
+   protected override bool ShouldRender()
+   {
+       return true;
+   }
+
+   protected override async Task OnAfterRenderAsync(bool firstRender)
+   {
+       if (firstRender)
+       {
+           await js.InvokeVoidAsync("startup");
+       }
+       
+       await js.InvokeVoidAsync("animateScene", angle++);
+       StateHasChanged();
+       await ViewModel.Render(graphic);
+       shouldrender = false;
+   }
+
+  // private async Task OnClickCanvas(MouseEventArgs e)
+   //{
+  //     if (e.Button == 0) await ViewModel.AddPoint.Execute((e.ClientX, e.ClientY));
+  // }
 
 }

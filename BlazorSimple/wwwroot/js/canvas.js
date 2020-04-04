@@ -1,42 +1,129 @@
-﻿var canvas, ctx;
+﻿let gl = null;
+let glCanvas = null;
 
-function init()
-{
-    canvas = document.getElementById('canvas');
-    if (canvas === null) { console.log("null"); return; }
-    ctx = canvas.getContext('2d');
+// Aspect ratio and coordinate system
+// details
+
+const vertexS = `
+    attribute vec2 aVertexPosition;
+
+    uniform vec2 uScalingFactor;
+    uniform vec2 uRotationVector;
+
+    void main() {
+        vec2 rotatedPosition = vec2(
+        aVertexPosition.x * uRotationVector.y +
+              aVertexPosition.y * uRotationVector.x,
+        aVertexPosition.y * uRotationVector.y -
+              aVertexPosition.x * uRotationVector.x
+      );
+
+      gl_Position = vec4(rotatedPosition * uScalingFactor, 0.0, 1.0);
+    }`;
+
+const fragmentS = `
+    #ifdef GL_ES
+        precision highp float;
+    #endif
+    uniform vec4 uGlobalColor;
+    void main() {
+            gl_FragColor = uGlobalColor;
+    }`;
+
+let aspectRatio;
+let currentRotation = [0, 1];
+let currentScale = [1.0, 1.0];
+
+let vertexArray;
+let vertexBuffer;
+let vertexNumComponents;
+let vertexCount;
+
+let uScalingFactor;
+let uGlobalColor;
+let uRotationVector;
+let aVertexPosition;
+
+let previousTime = 0.0;
+let degreesPerSecond = 90.0;
+
+function startup() {
+    glCanvas = document.getElementById("canvas");
+    gl = glCanvas.getContext("webgl");
+
+    gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+
+    shaderProgram = buildShaderProgram();
+
+    aspectRatio = glCanvas.width / glCanvas.height;
+    currentRotation = [0, 1];
+    currentScale = [1.0, aspectRatio];
+
+    vertexArray = new Float32Array([-0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5]);
+
+    vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
+
+    vertexNumComponents = 2;
+    vertexCount = vertexArray.length / vertexNumComponents;
 }
 
-function clear() {
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, 1000, 1000);
+function buildShaderProgram() {
+    let program = gl.createProgram();
+
+    let Vshader = compileShader(gl.VERTEX_SHADER, vertexS);
+    gl.attachShader(program, Vshader);
+
+    let Fshader = compileShader(gl.FRAGMENT_SHADER, fragmentS);
+    gl.attachShader(program, Fshader);
+
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.log("Error linking shader program:");
+        console.log(gl.getProgramInfoLog(program));
+    }
+
+    return program;
 }
 
-function drawPoint(clientX, clientY)
-{
-    let rect = canvas.getBoundingClientRect();
-    let x = clientX - rect.left;
-    let y = clientY - rect.top; 
+function compileShader(type, code) {
+    let shader = gl.createShader(type);
 
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(x, y, 4, 4);
+    gl.shaderSource(shader, code);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.log(`Error compiling ${type === gl.VERTEX_SHADER ? "vertex" : "fragment"} shader:`);
+        console.log(gl.getShaderInfoLog(shader));
+    }
+    return shader;
 }
 
-function drawLine(clientX1, clientY1, clientX2, clientY2)
-{
-//    clear();
-    let rect = canvas.getBoundingClientRect();
-    let x1 = clientX1 - rect.left;
-    let y1 = clientY1 - rect.top; 
-    let x2 = clientX2 - rect.left;
-    let y2 = clientY2 - rect.top; 
+function animateScene(angle) {
+    gl.clearColor(1.0, 0.9, 0.8, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.strokeStyle = '#00FF00';
-    ctx.stroke();
-    ctx.lineWidth = 1;
+    let radians = angle / 200.0;
+    currentRotation[0] = Math.sin(radians);
+    currentRotation[1] = Math.cos(radians);
 
+    gl.useProgram(shaderProgram);
+    uScalingFactor = gl.getUniformLocation(shaderProgram, "uScalingFactor");
+    uGlobalColor = gl.getUniformLocation(shaderProgram, "uGlobalColor");
+    uRotationVector = gl.getUniformLocation(shaderProgram, "uRotationVector");
+
+    gl.uniform2fv(uScalingFactor, currentScale);
+    gl.uniform2fv(uRotationVector, currentRotation);
+    gl.uniform4fv(uGlobalColor, [0., 0.0, 0.0, 1.0]);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+    aVertexPosition = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+
+    gl.enableVertexAttribArray(aVertexPosition);
+    gl.vertexAttribPointer(aVertexPosition, vertexNumComponents, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.LINE_LOOP, 0, vertexCount);
 }
