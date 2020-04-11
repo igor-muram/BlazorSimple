@@ -37,7 +37,7 @@
            await js.InvokeVoidAsync("startup");
        }
        
-       await js.InvokeVoidAsync("animateScene", angle++);
+       await js.InvokeVoidAsync("animateScene");
        StateHasChanged();
        await ViewModel.Render(graphic);
        shouldrender = false;

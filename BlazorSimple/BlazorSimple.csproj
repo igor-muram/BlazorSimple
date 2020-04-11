@@ -5,15 +5,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DynamicData" Version="6.14.8" />
-    <PackageReference Include="DynamicData.ReactiveUI" Version="6.11.0.2613" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.1" />
-    <PackageReference Include="ReactiveUI" Version="11.2.3" />
-    <PackageReference Include="ReactiveUI.Blazor" Version="11.2.3" />
+    <Content Remove="wwwroot\js\canvas.ts" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\js\three\" />
+    <TypeScriptCompile Remove="wwwroot\js\shader.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DynamicData" Version="6.14.8" />
+    <PackageReference Include="DynamicData.ReactiveUI" Version="6.11.0.2613" />
+    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="3.8.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.1" />
+    <PackageReference Include="ReactiveUI" Version="11.2.3" />
+    <PackageReference Include="ReactiveUI.Blazor" Version="11.2.3" />
   </ItemGroup>
 
 </Project>
