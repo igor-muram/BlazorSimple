@@ -20,12 +20,12 @@ namespace BlazorSimple
             AddPoint = ReactiveCommand.CreateFromTask<(double, double)>(async p => await Task.Run(()=>Points.Add(p)));
             Points.Connect().CountChanged().Subscribe(_ => NeedRender.OnNext(default));
         }
-        public async Task Render(IGraphics graphics)
+        public async Task Render(IBaseGraphic graphics)
         {
             var first = Points.Items.FirstOrDefault();
             foreach (var current in Points.Items.Skip(1)) 
             {
-                await graphics.DrawLine(first.Item1, first.Item2, current.Item1, current.Item2);
+               // await graphics.DrawLine(first.Item1, first.Item2, current.Item1, current.Item2);
                 first = current;
             }
         }
