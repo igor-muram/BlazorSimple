@@ -104,7 +104,7 @@ var vertexArray_1 = __webpack_require__(3);
 var camera_1 = __webpack_require__(4);
 var glm = __importStar(__webpack_require__(1));
 var glCanvas;
-var vertexSource = "#version 300 es\n    layout(location = 0) in vec3 position;\n\n    uniform mat4 model;\n    uniform mat4 view;\n    uniform mat4 proj;\n\n    uniform vec4 color;\n    out vec4 vert_color;\n\n    void main() {\n      gl_Position = vec4(position, 1.0);\n      vert_color = color;\n    }";
+var vertexSource = "#version 300 es\n    layout(location = 0) in vec3 position;\n\n    uniform mat4 model;\n    uniform mat4 view;\n    uniform mat4 proj;\n\n    uniform vec4 color;\n    out vec4 vert_color;\n\n    void main() {\n      gl_Position = proj * view * model * vec4(position, 1.0);\n      gl_PointSize = 20.0;\n      vert_color = color;\n    }";
 var fragmentSource = "#version 300 es\n    #ifdef GL_ES\n        precision highp float;\n    #endif\n\n    in vec4 vert_color;\n    out vec4 color;\n\n    void main() {\n            color = vert_color;\n    }";
 var vertices;
 var indices;
@@ -141,6 +141,7 @@ module.exports = {
         exports.gl = glCanvas.getContext("webgl2");
         width = glCanvas.width;
         height = glCanvas.height;
+        exports.gl.viewport(0, 0, width, height);
         shader = new shader_1.Shader(vertexSource, fragmentSource);
         vertices = new Float32Array([
             -0.5,
@@ -183,17 +184,16 @@ module.exports = {
             exports.gl.clear(exports.gl.COLOR_BUFFER_BIT | exports.gl.DEPTH_BUFFER_BIT);
             var model = glm.mat4.create();
             model = glm.mat4.identity(model);
-            // glm.mat4.translate(model, model, translate);
+            glm.mat4.translate(model, model, translate);
             camera.ProcessMouseMovement(currentX - lastX, currentY - lastY);
             lastX = currentX;
             lastY = currentY;
             camera.ProcessMouseWheel(wheelOffset);
             wheelOffset = 0;
-            var view = glm.mat4.create();
-            view = glm.mat4.identity(view); //camera.GetLookAt();
+            var view = camera.GetLookAt();
             var proj = glm.mat4.create();
             proj = glm.mat4.identity(proj);
-            //glm.mat4.perspective(proj, glm.glMatrix.toRadian(45.0), width / height, 0.1, 100);
+            glm.mat4.perspective(proj, glm.glMatrix.toRadian(45.0), width / height, 0.1, 100);
             shader.use();
             shader.setMat4("model", model);
             shader.setMat4("view", view);
@@ -201,10 +201,7 @@ module.exports = {
             if (array !== null) {
                 shader.setVec4("color", array.color);
                 array.use();
-                console.log(array.color);
-                console.log(array.isIndexed);
-                console.log(array.size);
-                exports.gl.drawArrays(exports.gl.LINES, 0, 2);
+                exports.gl.drawArrays(exports.gl.LINES, 0, array.size);
             }
             window.requestAnimationFrame(module.exports.draw);
         }
@@ -212,9 +209,9 @@ module.exports = {
     drawPoints: function (raw_points, color, drawMode, pointSize) {
         var mode = exports.gl.TRIANGLES;
         if (drawMode === 0) {
-            mode = exports.gl.POINTS;
+            mode = exports.gl.TRIANGLE_FAN;
         }
-        array = new vertexArray_1.VertexArray(raw_points, null, color, mode, pointSize);
+        array = new vertexArray_1.VertexArray(new Float32Array(raw_points), null, new Float32Array(color), 0, 10.0);
     },
 };
 
@@ -7896,14 +7893,8 @@ var VertexArray = /** @class */ (function () {
         this.size = 0;
         this.VAO = index_1.gl.createVertexArray();
         index_1.gl.bindVertexArray(this.VAO);
-        console.log("vertices: ", vertices);
-        console.log("indices: ", indices);
-        console.log("color: ", color);
-        console.log("drawMode: ", drawMode);
-        console.log("pointSize: ", pointSize);
         this.isIndexed = false;
         this.size = vertices.length / 3;
-        console.log("size: ", this.size);
         this.VBO = index_1.gl.createBuffer();
         index_1.gl.bindBuffer(index_1.gl.ARRAY_BUFFER, this.VBO);
         index_1.gl.bufferData(index_1.gl.ARRAY_BUFFER, vertices, index_1.gl.STATIC_DRAW);
@@ -7912,6 +7903,7 @@ var VertexArray = /** @class */ (function () {
         this.pointSize = pointSize;
         index_1.gl.enableVertexAttribArray(0);
         index_1.gl.vertexAttribPointer(0, 3, index_1.gl.FLOAT, false, 0, 0);
+        console.log("size: ", this.size);
         index_1.gl.bindVertexArray(null);
     }
     VertexArray.prototype.use = function () {

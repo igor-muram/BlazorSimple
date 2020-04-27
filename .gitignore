@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -31,3 +31,9 @@ packages/
 /x64
 
 /BlazorSimple/Properties/launchSettings.json
+
+webGL/.vscode/
+
+webGL/node_modules/
+
+webGL/package-lock.json
