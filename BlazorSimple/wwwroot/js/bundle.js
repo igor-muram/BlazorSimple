@@ -100,16 +100,20 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var shader_1 = __webpack_require__(2);
-var vertexArray_1 = __webpack_require__(3);
-var camera_1 = __webpack_require__(4);
+var pointArray_1 = __webpack_require__(3);
+var lineArray_1 = __webpack_require__(4);
+var camera_1 = __webpack_require__(5);
 var glm = __importStar(__webpack_require__(1));
 var glCanvas;
 var vertexSource = "#version 300 es\n    layout(location = 0) in vec3 position;\n\n    uniform mat4 model;\n    uniform mat4 view;\n    uniform mat4 proj;\n\n    uniform vec4 color;\n    out vec4 vert_color;\n\n    void main() {\n      gl_Position = proj * view * model * vec4(position, 1.0);\n      gl_PointSize = 20.0;\n      vert_color = color;\n    }";
 var fragmentSource = "#version 300 es\n    #ifdef GL_ES\n        precision highp float;\n    #endif\n\n    in vec4 vert_color;\n    out vec4 color;\n\n    void main() {\n            color = vert_color;\n    }";
+var vertexSource1 = "#version 300 es\n    layout(location = 0) in vec3 position;\n    layout(location = 1) in vec4 color;\n\n    uniform mat4 model;\n    uniform mat4 view;\n    uniform mat4 proj;\n\n    out vec4 vert_color;\n\n    void main() {\n      gl_Position = proj * view * model * vec4(position, 1.0);\n      vert_color = color;\n    }";
 var vertices;
 var indices;
 var shader;
-var array = null;
+var shader1;
+var array1 = null;
+var array2 = null;
 var camera;
 var translate;
 var width;
@@ -120,6 +124,7 @@ var currentX = 0;
 var currentY = 0;
 var wheelOffset = 0;
 var firstMove = true;
+var isDown = false;
 function glCanvasOnMouseMove(e) {
     var rect = glCanvas.getBoundingClientRect();
     currentX = e.clientX - rect.left;
@@ -130,6 +135,13 @@ function glCanvasOnMouseMove(e) {
         firstMove = false;
     }
 }
+function glCanvasOnMouseDown(e) {
+    if (e.button == 0)
+        isDown = true;
+}
+function glCanvasOnMouseUp(e) {
+    isDown = false;
+}
 function glCanvasOnWheel(e) {
     wheelOffset = e.deltaY;
 }
@@ -138,38 +150,15 @@ module.exports = {
         glCanvas = document.getElementById("canvas");
         glCanvas.addEventListener("mousemove", glCanvasOnMouseMove);
         glCanvas.addEventListener("wheel", glCanvasOnWheel);
+        // glCanvas.addEventListener("mousedown", glCanvasOnMouseDown);
+        //glCanvas.addEventListener("mouseup", glCanvasOnMouseUp);
+        //glCanvas.addEventListener("click", glCanvasOnMouseUp);
         exports.gl = glCanvas.getContext("webgl2");
         width = glCanvas.width;
         height = glCanvas.height;
         exports.gl.viewport(0, 0, width, height);
         shader = new shader_1.Shader(vertexSource, fragmentSource);
-        vertices = new Float32Array([
-            -0.5,
-            -0.5,
-            -0.5,
-            0.5,
-            -0.5,
-            -0.5,
-            0.5,
-            0.5,
-            -0.5,
-            -0.5,
-            0.5,
-            -0.5,
-            -0.5,
-            -0.5,
-            0.5,
-            0.5,
-            -0.5,
-            0.5,
-            0.5,
-            0.5,
-            0.5,
-            -0.5,
-            0.5,
-            0.5,
-        ]);
-        indices = new Int32Array([0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7, 7, 2, 6, 4, 5, 0, 0, 5, 1]);
+        shader1 = new shader_1.Shader(vertexSource1, fragmentSource);
         camera = new camera_1.Camera();
         translate = glm.vec3.create();
         translate[0] = 0.0;
@@ -194,24 +183,31 @@ module.exports = {
             var proj = glm.mat4.create();
             proj = glm.mat4.identity(proj);
             glm.mat4.perspective(proj, glm.glMatrix.toRadian(45.0), width / height, 0.1, 100);
-            shader.use();
-            shader.setMat4("model", model);
-            shader.setMat4("view", view);
-            shader.setMat4("proj", proj);
-            if (array !== null) {
-                shader.setVec4("color", array.color);
-                array.use();
-                exports.gl.drawArrays(exports.gl.LINES, 0, array.size);
+            if (array1 !== null) {
+                shader.use();
+                shader.setMat4("model", model);
+                shader.setMat4("view", view);
+                shader.setMat4("proj", proj);
+                shader.setVec4("color", array1.color);
+                array1.use();
+                exports.gl.drawArrays(array1.drawMode, 0, array1.size);
+            }
+            if (array2 !== null) {
+                shader1.use();
+                shader1.setMat4("model", model);
+                shader1.setMat4("view", view);
+                shader1.setMat4("proj", proj);
+                array2.use();
+                exports.gl.drawElements(array2.drawMode, array2.size, exports.gl.UNSIGNED_INT, 0);
             }
             window.requestAnimationFrame(module.exports.draw);
         }
     },
-    drawPoints: function (raw_points, color, drawMode, pointSize) {
-        var mode = exports.gl.TRIANGLES;
-        if (drawMode === 0) {
-            mode = exports.gl.TRIANGLE_FAN;
-        }
-        array = new vertexArray_1.VertexArray(new Float32Array(raw_points), null, new Float32Array(color), 0, 10.0);
+    drawPoints: function (raw_points, color, pointSize) {
+        array1 = new pointArray_1.PointArray(new Float32Array(raw_points), null, new Float32Array(color), exports.gl.POINTS, 10.0);
+    },
+    drawLines: function (raw_points, raw_indices) {
+        array2 = new lineArray_1.LineArray(new Float32Array(raw_points), new Int32Array(raw_indices));
     },
 };
 
@@ -7884,8 +7880,8 @@ exports.Shader = Shader;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var index_1 = __webpack_require__(0);
-var VertexArray = /** @class */ (function () {
-    function VertexArray(vertices, indices, color, drawMode, pointSize) {
+var PointArray = /** @class */ (function () {
+    function PointArray(vertices, indices, color, drawMode, pointSize) {
         this.VAO = null;
         this.VBO = null;
         this.EBO = null;
@@ -7906,16 +7902,53 @@ var VertexArray = /** @class */ (function () {
         console.log("size: ", this.size);
         index_1.gl.bindVertexArray(null);
     }
-    VertexArray.prototype.use = function () {
+    PointArray.prototype.use = function () {
         index_1.gl.bindVertexArray(this.VAO);
     };
-    return VertexArray;
+    return PointArray;
 }());
-exports.VertexArray = VertexArray;
+exports.PointArray = PointArray;
 
 
 /***/ }),
 /* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var index_1 = __webpack_require__(0);
+var LineArray = /** @class */ (function () {
+    function LineArray(vertices, indices) {
+        this.VAO = null;
+        this.VBO = null;
+        this.EBO = null;
+        this.VAO = index_1.gl.createVertexArray();
+        index_1.gl.bindVertexArray(this.VAO);
+        this.size = indices.length;
+        this.VBO = index_1.gl.createBuffer();
+        index_1.gl.bindBuffer(index_1.gl.ARRAY_BUFFER, this.VBO);
+        index_1.gl.bufferData(index_1.gl.ARRAY_BUFFER, vertices, index_1.gl.STATIC_DRAW);
+        this.EBO = index_1.gl.createBuffer();
+        index_1.gl.bindBuffer(index_1.gl.ELEMENT_ARRAY_BUFFER, this.EBO);
+        index_1.gl.bufferData(index_1.gl.ELEMENT_ARRAY_BUFFER, indices, index_1.gl.STATIC_DRAW);
+        this.drawMode = index_1.gl.LINES;
+        index_1.gl.enableVertexAttribArray(0);
+        index_1.gl.vertexAttribPointer(0, 3, index_1.gl.FLOAT, false, 7 * 4, 0);
+        index_1.gl.enableVertexAttribArray(1);
+        index_1.gl.vertexAttribPointer(1, 4, index_1.gl.FLOAT, false, 7 * 4, 3 * 4);
+        index_1.gl.bindVertexArray(null);
+    }
+    LineArray.prototype.use = function () {
+        index_1.gl.bindVertexArray(this.VAO);
+    };
+    return LineArray;
+}());
+exports.LineArray = LineArray;
+
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

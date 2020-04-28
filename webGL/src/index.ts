@@ -1,5 +1,6 @@
 import { Shader } from "./shader";
-import { VertexArray } from "./vertexArray";
+import { PointArray } from "./pointArray";
+import { LineArray } from "./lineArray";
 import { Camera } from "./camera";
 import * as glm from "gl-matrix";
 
@@ -34,11 +35,28 @@ const fragmentSource: string = `#version 300 es
             color = vert_color;
     }`;
 
+const vertexSource1: string = `#version 300 es
+    layout(location = 0) in vec3 position;
+    layout(location = 1) in vec4 color;
+
+    uniform mat4 model;
+    uniform mat4 view;
+    uniform mat4 proj;
+
+    out vec4 vert_color;
+
+    void main() {
+      gl_Position = proj * view * model * vec4(position, 1.0);
+      vert_color = color;
+    }`;
+
 let vertices: Float32Array;
 let indices: Int32Array;
 
 let shader: Shader;
-let array: VertexArray | null = null;
+let shader1: Shader;
+let array1: PointArray | null = null;
+let array2: LineArray | null = null;
 let camera: Camera;
 
 let translate: glm.vec3;
@@ -55,6 +73,7 @@ let currentY: number = 0;
 let wheelOffset: number = 0;
 
 let firstMove: boolean = true;
+let isDown: boolean = false;
 
 function glCanvasOnMouseMove(e: MouseEvent): void {
   var rect = glCanvas.getBoundingClientRect();
@@ -68,6 +87,14 @@ function glCanvasOnMouseMove(e: MouseEvent): void {
   }
 }
 
+function glCanvasOnMouseDown(e: MouseEvent) {
+  if (e.button == 0) isDown = true;
+}
+
+function glCanvasOnMouseUp(e: MouseEvent) {
+  isDown = false;
+}
+
 function glCanvasOnWheel(e: WheelEvent): void {
   wheelOffset = e.deltaY;
 }
@@ -78,6 +105,9 @@ module.exports = {
 
     glCanvas.addEventListener("mousemove", glCanvasOnMouseMove);
     glCanvas.addEventListener("wheel", glCanvasOnWheel);
+    // glCanvas.addEventListener("mousedown", glCanvasOnMouseDown);
+    //glCanvas.addEventListener("mouseup", glCanvasOnMouseUp);
+    //glCanvas.addEventListener("click", glCanvasOnMouseUp);
 
     gl = (glCanvas as HTMLCanvasElement).getContext("webgl2");
 
@@ -86,34 +116,7 @@ module.exports = {
     gl.viewport(0, 0, width, height);
 
     shader = new Shader(vertexSource, fragmentSource);
-
-    vertices = new Float32Array([
-      -0.5,
-      -0.5,
-      -0.5,
-      0.5,
-      -0.5,
-      -0.5,
-      0.5,
-      0.5,
-      -0.5,
-      -0.5,
-      0.5,
-      -0.5,
-      -0.5,
-      -0.5,
-      0.5,
-      0.5,
-      -0.5,
-      0.5,
-      0.5,
-      0.5,
-      0.5,
-      -0.5,
-      0.5,
-      0.5,
-    ]);
-    indices = new Int32Array([0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7, 7, 2, 6, 4, 5, 0, 0, 5, 1]);
+    shader1 = new Shader(vertexSource1, fragmentSource);
 
     camera = new Camera();
     translate = glm.vec3.create();
@@ -148,27 +151,34 @@ module.exports = {
       proj = glm.mat4.identity(proj);
       glm.mat4.perspective(proj, glm.glMatrix.toRadian(45.0), width / height, 0.1, 100);
 
-      shader.use();
-      shader.setMat4("model", model as Float32Array);
-      shader.setMat4("view", view as Float32Array);
-      shader.setMat4("proj", proj as Float32Array);
+      if (array1 !== null) {
+        shader.use();
+        shader.setMat4("model", model as Float32Array);
+        shader.setMat4("view", view as Float32Array);
+        shader.setMat4("proj", proj as Float32Array);
+        shader.setVec4("color", array1.color);
+        array1.use();
+        gl.drawArrays(array1.drawMode, 0, array1.size);
+      }
 
-      if (array !== null) {
-        shader.setVec4("color", array.color);
-        array.use();
-        gl.drawArrays(gl.LINES, 0, array.size);
+      if (array2 !== null) {
+        shader1.use();
+        shader1.setMat4("model", model as Float32Array);
+        shader1.setMat4("view", view as Float32Array);
+        shader1.setMat4("proj", proj as Float32Array);
+        array2.use();
+        gl.drawElements(array2.drawMode, array2.size, gl.UNSIGNED_INT, 0);
       }
 
       window.requestAnimationFrame(module.exports.draw);
     }
   },
 
-  drawPoints: function (raw_points: Float32Array, color: Float32Array, drawMode: number, pointSize: number): void {
-    let mode: number = gl.TRIANGLES;
-    if (drawMode === 0) {
-      mode = gl.TRIANGLE_FAN;
-    }
+  drawPoints: function (raw_points: Float32Array, color: Float32Array, pointSize: number): void {
+    array1 = new PointArray(new Float32Array(raw_points), null, new Float32Array(color), gl.POINTS, 10.0);
+  },
 
-    array = new VertexArray(new Float32Array(raw_points), null, new Float32Array(color), 0, 10.0);
+  drawLines: function (raw_points: Float32Array, raw_indices: Int32Array) {
+    array2 = new LineArray(new Float32Array(raw_points), new Int32Array(raw_indices));
   },
 };

@@ -102,8 +102,17 @@ namespace BlazorSimple.Interfaces
 
 	public enum PointTypes { Nail, Hook, SolidSphere, SQUARE, SQUARE_FILLED, TRIANGLE, TRIANGLE_FILLED, CIRCLE, CIRCLE_FILLED, INVERS_TRIANGLE, INVERS_TRIANGLE_FILLED, RHOMB, RHOMB_FILLED }
 
+	public enum LineTypes : uint
+	{
+		ltSolid = 0xFFFF,
+		ltDotted = 0x3333,
+		ltCenter = 0xF18F,
+		ltDashed = 0xF0F0
+	};
+
 	public interface IBaseGraphic
 	{
 		void DrawPoints(IEnumerable<Vector3D> Points, Color color, PointTypes type, Thickness size, bool IsTopMost = true);
+		void DrawIndexedLines(IList<Vector3D> vertices, IEnumerable<(int, int, Color)> lines, LineTypes type = LineTypes.ltSolid, Thickness thickness = Thickness.Small, bool IsTopMost = false);
 	}
 }
