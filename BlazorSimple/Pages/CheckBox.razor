@@ -1,31 +1,11 @@
-﻿
-
-<div style="display:flex; align-items:center;">
-    <input type="checkbox" id="@name" style="@style" @bind-value="Check">
-    <label for="@name" style="color: @textColor">@text</label>
+﻿<div class="checkbox checkbox-1">
+    <span class="check-1"></span>
+    @text
 </div>
 
+
 @code {
-   [Parameter]
-   public string name { get; set; } = "";
-   [Parameter]
-   public string style { get; set; } = "";
-
-   [Parameter]
-   public string text { get; set; } = "";
-   bool check;
-   bool Check
-   {
-       get => check;
-       set
-       {
-           check = value;
-           if (!check)
-               textColor = "black";
-           else
-               textColor = "red";
-       }
-   }
-
-   string textColor = "black";
+    [Parameter]
+    public string text { get; set; } = "";
 }
+
