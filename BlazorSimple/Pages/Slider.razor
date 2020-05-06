@@ -1,0 +1,12 @@
+﻿<input type="range" class="slider slider-1" min="@min" max="@max" step="@step" value="@value">
+
+@code {
+    [Parameter]
+    public string min { get; set; } = "-2.5";
+    [Parameter]
+    public string max { get; set; } = "2.5";
+    [Parameter]
+    public string step { get; set; } = "0.5";
+    [Parameter]
+    public string value { get; set; } = "0.0";
+}

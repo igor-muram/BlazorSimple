@@ -1,6 +1,11 @@
-﻿<button class="button">@text</button>
+﻿<button class="button">
+    <i class="@icon"></i>
+    <span>@text</span>
+</button>
 
 @code {
     [Parameter]
     public string text { get; set; } = "";
+    [Parameter]
+    public string icon { get; set; } = "";
 }

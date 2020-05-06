@@ -1,11 +1,15 @@
-﻿<div class="checkbox checkbox-1">
-    <span class="check-1"></span>
+﻿<div class="checkbox checkbox-2" @onclick="ChangeStyle">
+    <span class="@Checked check-2"></span>
     @text
 </div>
-
 
 @code {
     [Parameter]
     public string text { get; set; } = "";
-}
+    private string Checked = "";
 
+    private void ChangeStyle()
+    {
+        Checked = (Checked == "") ? "is-checked-2" : "";
+    }
+}

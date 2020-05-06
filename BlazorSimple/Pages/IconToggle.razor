@@ -1,0 +1,14 @@
+﻿<button class="button button-icon toggle @Clicked" @onclick="ChangeStyle">
+    <i class="@icon"></i>
+</button>
+
+@code {
+    [Parameter]
+    public string icon { get; set; } = "";
+    private string Clicked = "";
+
+    private void ChangeStyle()
+    {
+        Clicked = (Clicked == "") ? "active" : "";
+    }
+}

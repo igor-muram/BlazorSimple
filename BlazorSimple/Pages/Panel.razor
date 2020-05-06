@@ -1,0 +1,19 @@
+﻿<div class="panel">
+    <div class="panel-heading">
+        <span class="panel-text">
+            @title
+            <i class="fas fa-angle-down"></i>
+        </span>
+    </div>
+
+    <div class="panel-collapse">
+        <div>@text</div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string title { get; set; } = "";
+    [Parameter]
+    public string text { get; set; } = "";
+}
